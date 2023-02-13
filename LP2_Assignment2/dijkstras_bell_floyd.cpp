@@ -1,143 +1,140 @@
-#include<bits/stdc++.h>
+#include <bits/stdc++.h>
 using namespace std;
-
-class Node{
-    int data;
-    Node *next;
-
-    public:
-        Node(int data, Node *next = nullptr)
-        {
-            this->data = data;
-            this->next = next;
-        }
-    friend class Graph;
-};
-
 
 class Graph
 {
-private:
     int vertices;
-    int edges;
-    Node **graph;
-    bool *visited;
+    vector<vector<int>> adj_mat;
+
 public:
+    const int weight_limit = RAND_MAX ;
+    int edges = 0;
 
-    Graph(int vertices=0, int edges=0)
+    Graph(int v)
     {
-        this->vertices = vertices;
-        this->edges = edges;
-        graph = new Node*[vertices];
-        visited[vertices] = new bool[vertices];
-        for(int i = 0; i < vertices; i++)
-        {
-            graph[i] = nullptr;
-            visited[i] = false;
-        }
+        vertices = v;
+        this->adj_mat = vector<vector<int>>(this->vertices, vector<int>(this->vertices, 1e9));
     }
-    void acceptGraph(){
-        int source,destination;
-        for(int i = 0; i < edges; i++)
-        {
-            cout<<"Enter the source: "<<endl;
-            cin>>source;
-            cout<<"Enter the destination: "<<endl;
-            cin>>destination;
-            addEdge(source,destination);
-        }
-    }
-    void addEdge(int source, int destination)
-    {
-        Node *dest = new Node(destination);
 
-        if(graph[source] == nullptr)
+    
+    int get_edges()
+    {
+        return this->edges;
+    }
+
+    void add_edge(int s, int d, int w)
+    {
+        edges++;
+        adj_mat[s][d] = w;
+    }
+
+
+    int minvertex(vector<int> &value, vector<bool> &processed)
+    {
+        int min = 1e9;
+        int vertex;
+        for (int i = 0; i < vertices; i++)
         {
-            graph[source] = dest;
-        }
-        else
-        {
-            Node *temp = graph[source];
-            while(temp->next != nullptr)
+            if (processed[i] == false && value[i] < min)
             {
-                temp = temp->next;
+                min = value[i];
+                vertex = i;
             }
-            temp->next = dest;
         }
+        return vertex;
     }
-    void bfs(int src)
+
+    void dijkstras()
     {
-        bool bvisited[vertices] = {false};
-        queue<int>q;    
-        q.push(src);    
+        vector<int> parent(vertices);
+        vector<int> weight(vertices, 1e9);
+        vector<bool> processed(vertices, false);
 
-        while(!q.empty())
+        parent[0] = -1;
+        weight[0] = 0;
+
+        for (int i = 0; i < vertices - 1; i++)
         {
-            src = q.front();
-            cout<<src<<" ";
-            q.pop();
 
-            Node *start = graph[src];
-            while(start != nullptr)
+            int u = minvertex(weight, processed);
+            processed[u] = true;
+
+            for (int j = 0; j < vertices; j++)
             {
-                if(!bvisited[start->data])
+                if (adj_mat[u][j] != 1e9 && processed[j] == false && weight[u] != 1e9 && (weight[u] + adj_mat[u][j] < weight[j]))
                 {
-                    bvisited[start->data] = true;
-                    q.push(start->data);
+                    weight[j] = weight[u] + adj_mat[u][j];
+                    parent[j] = u;
                 }
-                start = start->next;
             }
-
-
         }
-
+        cout << "Printing shortest path from index 0 to all other vertices :" << endl;
+        time_t start, end;
+        ios_base::sync_with_stdio(false);
+        time(&start);
+        path_print(parent, weight);
+        time(&end);
+        double time_taken = double(end - start);
+        cout << "The time taken to print the single source shortest path is " << time_taken << setprecision(5);
+        cout << " sec " << endl;
     }
+
     void display()
     {
-        for(int i = 0; i < vertices; i++)
+        for (int i = 0; i < vertices; i++)
         {
-            cout<<i<<": ";
-            Node *temp = graph[i];
-
-            while(temp != nullptr)
+            for (int j = 0; j < vertices; j++)
             {
-            cout<<temp->data<<" -> ";
-            temp = temp->next;
+                if (adj_mat[i][j] == 1e9)
+                    cout << "INF"
+                         << "     ";
+                else
+                    cout << adj_mat[i][j] << "     ";
             }
-            cout<<endl;
+            cout << endl;
         }
     }
-    void dfs(int start)
+    int minDistance(int dist[], bool sptSet[])
     {
-        visited[start] =true;
-        cout<<start<<" ";
-        Node *temp = graph[start];
 
-        while(temp != nullptr)
+        int V = this->vertices;
+        // Initialize min value
+        int min = 1e9, min_index;
+
+        for (int v = 0; v < V; v++)
+            if (sptSet[v] == false && dist[v] <= min)
+            {
+                min = dist[v];
+                min_index = v;
+            }
+
+        return min_index;
+    }
+    
+    void path_print(vector<int> &parent, vector<int> &weight)
+    {
+        for (int i = 0; i < vertices; i++)
         {
-            if(!visited[temp->data])
-                dfs(temp->data);
-            temp = temp->next;
+            vector<int> temp;
+            temp.push_back(i);
+            int par = parent[i];
+            while (par != -1)
+            {
+                temp.push_back(par);
+                par = parent[par];
+            }
+            for (int j = temp.size() - 1; j > 0; j--)
+            {
+                cout << temp[j] << "->";
+            }
+            cout << temp[0];
+            cout << "      weight = " << weight[i];
+            cout << endl;
         }
     }
 };
-
 int main()
 {
-
-
-    int edges,vertices;
-    cout<<"Enter the edges: ";
-    cin>>edges;
-    cout<<endl;
-    cout<<"Enter the vertices: ";
-    cin>>vertices;
-    cout<<endl;
-    Graph graph(vertices,edges);
-    graph.acceptGraph();
-    // graph.display();
-    // graph.bfs(0);
-    graph.dfs(0);
-
+   
     return 0;
-}
+};
